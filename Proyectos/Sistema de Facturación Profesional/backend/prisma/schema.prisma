@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  password     String
+  name         String
+  role         String    @default("USER")
+  businessName String?
+  taxId        String?
+  address      String?
+  city         String?
+  state        String?   @default("WY")
+  postalCode   String?
+  country      String    @default("US")
+  phone        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  clients      Client[]
+  invoices     Invoice[]
+  projects     Project[]
+  settings     Settings?
+  timeEntries  TimeEntry[]
+  approvedTimeEntries TimeEntry[] @relation("ApprovedBy")
+
+  @@map("users")
+}
+
+model Settings {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  emailFromName       String?
+  emailFromAddress    String?
+  emailReplyTo        String?
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPassword        String?
+  smtpSecure          Boolean  @default(true)
+  invoicePrefix       String   @default("INV")
+  nextInvoiceNumber   Int      @default(1)
+  defaultCurrency     String   @default("USD")
+  defaultTaxRate      Float    @default(0)
+  defaultPaymentTerms Int      @default(30)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  bankAccountHolder   String?
+  bankAccountNumber   String?
+  bankName            String?
+  bankRoutingNumber   String?
+  bankSwiftCode       String?
+  paymentInstructions String?
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("settings")
+}
+
+model Client {
+  id            String       @id @default(cuid())
+  userId        String
+  businessName  String
+  contactName   String
+  email         String
+  phone         String?
+  taxId         String
+  address       String
+  city          String?
+  state         String?
+  postalCode    String?
+  country       String       @default("US")
+  currency      String       @default("USD")
+  taxRate       Float        @default(0)
+  paymentTerms  Int          @default(30)
+  status        String       @default("ACTIVE")
+  totalInvoiced Float        @default(0)
+  lastInvoice   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices      Invoice[]
+  projects      Project[]
+
+  @@index([userId])
+  @@index([email])
+  @@map("clients")
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  userId         String
+  clientId       String
+  name           String
+  description    String
+  status         String        @default("PLANNING")
+  priority       String        @default("MEDIUM")
+  startDate      DateTime
+  endDate        DateTime
+  budget         Float
+  budgetSpent    Float         @default(0)
+  currency       String        @default("USD")
+  hoursEstimated Int           @default(0)
+  hoursLogged    Int           @default(0)
+  progress       Int           @default(0)
+  team           String        @default("[]")
+  services       String        @default("[]")
+  milestones     String        @default("[]")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  invoices       Invoice[]
+  timeEntries    TimeEntry[]
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  userId        String
+  clientId      String
+  projectId     String?
+  invoiceNumber String        @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  jurisdiction  String        @default("USA")
+  currency      String        @default("USD")
+  subtotal      Float
+  taxRate       Float
+  taxAmount     Float
+  discount      Float         @default(0)
+  total         Float
+  status        String        @default("DRAFT")
+  paidDate      DateTime?
+  sentDate      DateTime?
+  paymentMethod String?
+  notes         String?
+  language      String        @default("en")
+  pdfUrl        String?
+  clientEmail   String
+  clientAddress String?
+  taxIdClient   String?
+  paymentTerms  Int           @default(30)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         InvoiceItem[]
+  timeEntries   TimeEntry[]
+  client        Client        @relation(fields: [clientId], references: [id])
+  project       Project?      @relation(fields: [projectId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
+  @@index([invoiceDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Float?
+  hours       Float?
+  rate        Float?
+  unitPrice   Float?
+  amount      Float
+  createdAt   DateTime @default(now())
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  entityType String
+  entityId   String
+  action     String
+  oldValue   String?
+  newValue   String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model TimeEntry {
+  id            String    @id @default(cuid())
+  userId        String
+  projectId     String
+  invoiceId     String?
+  taskName      String?
+  description   String
+  date          DateTime
+  startTime     DateTime?
+  endTime       DateTime?
+  hours         Float
+  minutes       Int       @default(0)
+  rate          Float
+  currency      String    @default("USD")
+  isBillable    Boolean   @default(true)
+  status        String    @default("PENDING")
+  approvedBy    String?
+  approvedAt    DateTime?
+  rejectedReason String?
+  totalAmount   Float
+  tags          String    @default("[]")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invoice       Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  approver      User?     @relation("ApprovedBy", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([date])
+  @@index([status])
+  @@index([isBillable])
+  @@map("time_entries")
+}
+
+// Enums convertidos a String para compatibilidad con SQLite
+// Role: "USER" | "ADMIN"
+// ClientStatus: "ACTIVE" | "INACTIVE"
+// Currency: "USD" | "EUR" | "ARS" | "MXN"
+// ProjectStatus: "PLANNING" | "IN_PROGRESS" | "ON_HOLD" | "COMPLETED"
+// Priority: "LOW" | "MEDIUM" | "HIGH"
+// InvoiceStatus: "DRAFT" | "SENT" | "PAID" | "PENDING" | "OVERDUE" | "CANCELLED"
+// TimeEntryStatus: "PENDING" | "APPROVED" | "REJECTED" | "BILLED"
