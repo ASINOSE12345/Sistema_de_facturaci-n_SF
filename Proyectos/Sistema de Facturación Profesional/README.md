@@ -24,6 +24,7 @@ Sistema completo de gestión de facturación profesional desarrollado con React,
 - [Contribución](#-contribución)
 - [Reportar Problemas](#-reportar-problemas)
 - [Licencia](#-licencia)
+- [📘 Descripción Completa](#-descripción-completa)
 
 ## 🎯 Descripción
 
@@ -773,6 +774,20 @@ SOFTWARE.
 
 Para soporte, abre un issue en GitHub:
 - **GitHub Issues**: [Issues](https://github.com/ASINOSE12345/Sistema_de_facturaci-n_SF/issues)
+
+## 📘 Descripción Completa
+
+Para una descripción exhaustiva y detallada de todo el software, incluyendo arquitectura completa, módulos, servicios, modelos de datos, flujos de trabajo y estadísticas del proyecto, consulta el documento **[DESCRIPTION.md](DESCRIPTION.md)**.
+
+Este documento incluye:
+- 🏗️ Arquitectura completa del sistema
+- 📦 Descripción detallada de todos los módulos
+- 🔧 Servicios del backend explicados
+- 🗄️ Esquema completo de base de datos
+- 🔐 Medidas de seguridad implementadas
+- 🚀 Guía de despliegue
+- 📊 Estadísticas del proyecto
+- 🔄 Flujos de trabajo principales
 
 ---
 
